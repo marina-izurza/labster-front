@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient} from '@angular/common/http';
+import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {MessageStatus} from '../models/message.model';
 
@@ -12,18 +12,12 @@ export class MessageService {
   constructor(private http: HttpClient) {
   }
 
+  getAllMessages(): Observable<MessageStatus[]> {
+    return this.http.get<MessageStatus[]>(this.apiUrl + "/messages");
+  }
+
   sendMessage(message: string): Observable<MessageStatus> {
     return this.http.post<MessageStatus>(this.apiUrl + "/message", {message});
   }
 
-  getMessageStatus(userToken: string): Observable<MessageStatus[]> {
-    return this.http.get<MessageStatus[]>(this.apiUrl + "/messages/" + userToken);
-  }
-
-
-  getMessages(userToken: string): Observable<MessageStatus[]> {
-    return this.http.get<MessageStatus[]>(this.apiUrl + `/messages`, {
-      headers: {'User-Token': userToken}
-    });
-  }
 }
