@@ -9,15 +9,21 @@ import {MessageStatus} from '../models/message.model';
 export class MessageService {
   private apiUrl: string = 'http://localhost:8000';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+  }
 
   sendMessage(message: string): Observable<MessageStatus> {
-    return this.http.post<MessageStatus>(this.apiUrl + "/message", { message });
+    return this.http.post<MessageStatus>(this.apiUrl + "/message", {message});
   }
+
+  getMessageStatus(userToken: string): Observable<MessageStatus[]> {
+    return this.http.get<MessageStatus[]>(this.apiUrl + "/messages/" + userToken);
+  }
+
 
   getMessages(userToken: string): Observable<MessageStatus[]> {
     return this.http.get<MessageStatus[]>(this.apiUrl + `/messages`, {
-      headers: { 'User-Token': userToken }
+      headers: {'User-Token': userToken}
     });
   }
 }

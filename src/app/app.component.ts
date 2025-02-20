@@ -1,20 +1,19 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {FormsModule} from '@angular/forms';
+import {Component, OnInit} from '@angular/core';
 import {MessageService} from './form/message.service';
 import {MessageStatus} from './models/message.model';
-import {interval, Subscription} from 'rxjs';
+import {FormsModule} from '@angular/forms';
+import {NgClass, NgForOf, NgIf} from '@angular/common';
 
 @Component({
   selector: 'app-root',
-  imports: [FormsModule],
   standalone: true,
+  imports: [FormsModule, NgIf, NgForOf, NgClass],
   template: `
     <div class="h-screen flex justify-center items-center">
       <div class="w-full max-w-md p-8 bg-white shadow-lg rounded-lg mx-auto">
         <span class="text-2xl font-semibold text-center text-gray-800 mb-6">Send us your message</span>
 
         <form (ngSubmit)="submitForm()">
-
           <div class="mb-6">
             <label for="message" class="block text-sm font-medium text-gray-600">Message</label>
             <textarea
@@ -37,36 +36,49 @@ import {interval, Subscription} from 'rxjs';
             </button>
           </div>
         </form>
+
         <div class="mt-4 text-center">
           <span class="text-sm text-gray-600">
             {{ alertStatus }}
           </span>
         </div>
+
+        <div *ngIf="messages.length > 0" class="mt-4">
+          <h3 class="text-lg font-semibold">Messages:</h3>
+          <ul>
+            <li *ngFor="let message of messages">
+              <p>{{ message.content }} -
+                <span [ngClass]="{
+                  'text-yellow-600': message.status === 'pending',
+                  'text-green-600': message.status === 'completed'
+                }">
+                  {{ message.status }}
+                </span>
+              </p>
+            </li>
+          </ul>
+        </div>
       </div>
     </div>
-  `,
+  `
 })
-export class AppComponent implements OnInit, OnDestroy {
+export class AppComponent implements OnInit {
   message: string = '';
   alertStatus: string = 'Ready to send!';
+  messages: MessageStatus[] = [];
+  userToken: string = '12345';
   completedMessages: MessageStatus[] = [];
-  userToken: string = '12345'; // Token único por usuario, puede generarse dinámicamente
-  pollingSubscription: Subscription = new Subscription();
 
   constructor(private readonly messageService: MessageService) {
   }
 
   ngOnInit(): void {
-    this.startPolling();
-  }
-
-  ngOnDestroy(): void {
-    //this.pollingSubscription.unsubscribe();
+    this.checkMessageStatus();
   }
 
   submitForm(): void {
     if (this.message) {
-      this.alertStatus = 'Sending...';
+      this.alertStatus = 'Processing...';
 
       this.messageService.sendMessage(this.message).subscribe({
         next: (response: MessageStatus): void => {
@@ -77,35 +89,21 @@ export class AppComponent implements OnInit, OnDestroy {
         error: (error: any): void => {
           console.error('Error sending message:', error);
           this.alertStatus = 'Error sending message!';
-        },
-        complete: (): void => {
-          console.log('Request completed.');
         }
       });
     }
   }
 
-  startPolling(): void {
-    console.log('Polling...');
-    /*this.pollingSubscription = interval(5000).subscribe((): void => {
-      //this.checkCompletedMessages();
-    });*/
+  checkMessageStatus(): void {
+    this.messageService.getMessageStatus(this.userToken).subscribe({
+      next: (messages: MessageStatus[]) => {
+        console.log('Current Messages:', messages);
+        this.completedMessages = messages.filter(msg => msg.status === 'completed');
+      },
+      error: (error: any) => {
+        console.error('Error checking message status:', error);
+      }
+    });
   }
-  /*
-   checkCompletedMessages(): void {
-     this.messageService.getMessages(this.userToken).subscribe({
-       next: (messages: MessageStatus[]): void => {
-         this.completedMessages = messages;
-         if (this.completedMessages.length > 0) {
-           this.alertStatus = 'Messages processed!';
-         }
-       },
-       error: (error: any): void => {
-         console.error('Error checking messages:', error);
-         this.alertStatus = 'Error checking messages!';
-       }
-     });
-   }
-   */
-}
 
+}
