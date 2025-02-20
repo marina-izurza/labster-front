@@ -1,5 +1,5 @@
 import {Injectable} from '@angular/core';
-import {HttpClient, HttpHeaders} from '@angular/common/http';
+import {HttpClient} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import {MessageStatus} from '../models/message.model';
 
@@ -20,4 +20,7 @@ export class MessageService {
     return this.http.post<MessageStatus>(this.apiUrl + "/message", {message});
   }
 
+  validateMessage(messageId: string): Observable<MessageStatus> {
+    return this.http.post<MessageStatus>(this.apiUrl + "/validate", {messageId});
+  }
 }

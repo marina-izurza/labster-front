@@ -72,7 +72,6 @@ export class UserChatPage implements OnInit, OnDestroy {
   message: string = '';
   alertStatus: string = 'Ready to send!';
   messages: MessageStatus[] = [];
-  userToken: string = '12345';
   private intervalId!: any;
 
   constructor(private readonly messageService: MessageService, private readonly router: Router) {}

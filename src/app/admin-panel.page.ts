@@ -14,7 +14,8 @@ import {Router} from '@angular/router';
   ],
   template: `
     <div class="p-8 bg-gray-50 min-h-screen flex flex-col">
-      <button (click)="goBack()" class="px-4 py-2 bg-gray-500 cursor-pointer text-white rounded hover:bg-gray-600 mb-4 self-start">
+      <button (click)="goBack()"
+              class="px-4 py-2 bg-gray-500 cursor-pointer text-white rounded hover:bg-gray-600 mb-4 self-start">
         Volver
       </button>
 
@@ -24,7 +25,8 @@ import {Router} from '@angular/router';
         <h3 class="text-xl font-semibold text-gray-700 mb-4">Pending Messages:</h3>
         <div *ngIf="messages.length > 0; else noMessages">
           <ul class="space-y-4">
-            <li *ngFor="let message of messages" class="flex justify-between items-center p-4 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-200">
+            <li *ngFor="let message of messages"
+                class="flex justify-between items-center p-4 bg-gray-100 rounded-lg hover:bg-gray-200 transition duration-200">
               <div>
                 <p class="text-gray-800">{{ message.content }}</p>
                 <span class="text-yellow-600">{{ message.status }}</span>
@@ -70,7 +72,15 @@ export class AdminPanelComponent implements OnInit {
 
 
   validateMessage(messageId: string): void {
-    console.log(`Validating message with ID: ${messageId}`);
+    console.log('Validating message:', messageId);
+    this.messageService.validateMessage(messageId).subscribe({
+      next: (): void => {
+        this.loadMessages();
+      },
+      error: (error: any): void => {
+        console.error('Error validating message:', error);
+      }
+    });
   }
 
   goBack() {
