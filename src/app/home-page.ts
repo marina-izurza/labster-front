@@ -1,12 +1,14 @@
-import { Component } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { MessageService } from './form/message.service';
-import { Router } from '@angular/router';
+import {Component, OnInit} from '@angular/core';
+import {FormsModule} from '@angular/forms';
+import {MessageService} from './form/message.service';
+import {Subscription} from 'rxjs';
+import {NgIf} from '@angular/common';
+import {MessageStatus} from './models/message.model';
 
 @Component({
   selector: 'home-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, NgIf],
   template: `
     <div class="h-screen flex justify-center items-center bg-gray-50">
       <div class="w-full max-w-md p-8 bg-white shadow-lg rounded-lg mx-auto">
@@ -18,6 +20,7 @@ import { Router } from '@angular/router';
           <div class="mb-6">
             <label for="message" class="block text-sm font-medium text-gray-600">Message</label>
             <textarea
+              *ngIf="isInitialized"
               id="message"
               name="message"
               [(ngModel)]="message"
@@ -25,6 +28,7 @@ import { Router } from '@angular/router';
               class="w-full px-4 py-2 mt-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
               placeholder="Write your message"
               required
+              [disabled]="isMessageInputDisabled"
             ></textarea>
           </div>
 
@@ -45,27 +49,66 @@ import { Router } from '@angular/router';
     </div>
   `
 })
-export class HomePage {
+export class HomePage implements OnInit {
   message: string = '';
-  alertStatus: string = 'Ready to send!';
+  alertStatus: string = 'Ready to send 🖋️️';
+  lastMessageId: string | null = null;
+  messageSubscription: Subscription | null = null;
 
-  constructor(private readonly messageService: MessageService, private readonly router: Router) {}
+  isMessageInputDisabled: boolean = false;
+  isInitialized: boolean = false;
+
+  constructor(private readonly messageService: MessageService) {
+  }
+
+  ngOnInit(): void {
+    this.isInitialized = true;
+  }
 
   submitForm(): void {
-    if (this.message) {
-      this.alertStatus = 'Processing...';
+    if (!this.message) return;
 
-      this.messageService.sendMessage(this.message).subscribe({
-        next: (response) => {
-          console.log('Message sent:', response);
-          this.alertStatus = 'Message Sent!';
-          this.message = '';
-        },
-        error: (error) => {
-          console.error('Error sending message:', error);
-          this.alertStatus = 'Error sending message!';
-        }
-      });
-    }
+    this.alertStatus = 'Sending message 📨';
+    this.isMessageInputDisabled = true;
+
+    this.messageService.sendMessage(this.message).subscribe({
+      next: (response: MessageStatus): void => {
+        this.lastMessageId = response.id;
+        this.message = '';
+
+        // quito suscripcion previa
+        if (this.messageSubscription) this.messageSubscription.unsubscribe();
+
+        // empiezo a escuchar
+        this.messageSubscription = this.messageService.watchMessageStatus().subscribe((messagesObj: MessageStatus[]) => {
+          if (!messagesObj || typeof messagesObj !== 'object') {
+            console.error("Error: The API did not return a valid object.", messagesObj);
+            return;
+          }
+
+          const messages: MessageStatus[] = Object.values(messagesObj);
+
+          const userMessage: MessageStatus | undefined = messages.find((msg: MessageStatus): boolean => msg.id === this.lastMessageId);
+          if (userMessage) {
+            if (userMessage.status === 'completed') {
+              this.alertStatus = 'Message successfully processed! 🎉';
+              this.isMessageInputDisabled = false;
+              this.messageSubscription?.unsubscribe(); // paro la suscripcion al validar el mensajee
+              setTimeout(() => {
+                this.alertStatus = "Ready to send 🖋️️";
+              }, 3000);
+            } else {
+              this.alertStatus = 'Message pending processing ⏳';
+            }
+          }
+        });
+      },
+      error: (): void => {
+        this.alertStatus = 'Error sending the message ⚠️';
+        this.isMessageInputDisabled = false;
+      }
+    });
   }
+
 }
+

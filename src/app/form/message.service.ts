@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, interval, switchMap } from 'rxjs';
 import { MessageStatus } from '../models/message.model';
 
 @Injectable({
@@ -12,6 +12,16 @@ export class MessageService {
   constructor(private http: HttpClient) {}
 
   sendMessage(message: string): Observable<MessageStatus> {
-    return this.http.post<MessageStatus>(this.apiUrl + "/message", { message });
+    return this.http.post<MessageStatus>(`${this.apiUrl}/message`, { message });
+  }
+
+  getMessages(): Observable<MessageStatus[]> {
+    return this.http.get<MessageStatus[]>(`${this.apiUrl}/messages`);
+  }
+
+  watchMessageStatus(): Observable<MessageStatus[]> {
+    return interval(5000).pipe(
+      switchMap(() => this.getMessages())
+    );
   }
 }
