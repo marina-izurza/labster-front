@@ -1,6 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MessageService } from './form/message.service';
+import { MessageService } from './services/message.service';
 import { Subscription } from 'rxjs';
 import { NgIf } from '@angular/common';
 import { Message } from './models/message.model';
