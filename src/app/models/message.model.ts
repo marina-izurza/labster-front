@@ -1,6 +1,6 @@
-export interface MessageStatus {
+export interface Message {
   id: string;
-  status: 'pending' | 'processing' | 'completed';
-  content?: string;
+  status: 'pending' | 'completed';
+  content: string;
 }
 
